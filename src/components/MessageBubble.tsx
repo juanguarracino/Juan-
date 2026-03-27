@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Markdown from 'react-native-markdown-display';
+import { SimpleMarkdown } from './SimpleMarkdown';
 import { Colors } from '../constants/Colors';
 import type { Message } from '../types/chat';
 
@@ -35,9 +35,7 @@ export function MessageBubble({ message }: Props) {
             {message.content}
           </Text>
         ) : (
-          <Markdown style={isError ? errorMarkdownStyles : assistantMarkdownStyles}>
-            {message.content}
-          </Markdown>
+          <SimpleMarkdown isError={isError}>{message.content}</SimpleMarkdown>
         )}
         <Text style={[styles.timestamp, isUser ? styles.timestampUser : styles.timestampAssistant]}>
           {formatTime(message.timestamp)}
@@ -47,59 +45,6 @@ export function MessageBubble({ message }: Props) {
   );
 }
 
-const assistantMarkdownStyles = {
-  body: {
-    color: Colors.textPrimary,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  strong: {
-    color: Colors.textPrimary,
-    fontWeight: '700' as const,
-  },
-  em: {
-    color: Colors.textSecondary,
-    fontStyle: 'italic' as const,
-  },
-  bullet_list: {
-    marginVertical: 4,
-  },
-  ordered_list: {
-    marginVertical: 4,
-  },
-  list_item: {
-    marginVertical: 2,
-  },
-  hr: {
-    backgroundColor: Colors.separator,
-    height: 1,
-    marginVertical: 10,
-  },
-  heading1: {
-    color: Colors.primary,
-    fontSize: 17,
-    fontWeight: '700' as const,
-    marginBottom: 4,
-  },
-  heading2: {
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: '600' as const,
-    marginBottom: 4,
-  },
-  paragraph: {
-    marginVertical: 3,
-  },
-};
-
-const errorMarkdownStyles = {
-  ...assistantMarkdownStyles,
-  body: {
-    color: Colors.error,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-};
 
 const styles = StyleSheet.create({
   row: {
