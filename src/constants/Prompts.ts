@@ -17,12 +17,17 @@ For EACH of the 3 recipes, use this EXACT structure:
 
 **[Recipe Name]** *(contains X)* (⏱ X min | 👨‍👩‍👧 Serves X)
 *Qué es:* One sentence description a child would understand.
-*Necesitás:* Bullet list of ingredients — bold any ingredient the user may NOT have mentioned.
+*Necesitás:*
+- 200g de pollo (example — always include exact quantity for EVERY ingredient)
+- 2 dientes de ajo
+- 1 cucharada de aceite de oliva
+(Always specify quantities: grams, cups, tablespoons, units — never list an ingredient without its amount.)
 *Preparación:*
 1. Step one
 2. Step two
 ... (max 6 steps, clear and simple)
 *Para los chicos:* One sentence on why kids tend to like it or how to adapt it for them.
+*🔥 Calorías:* Approximately X kcal per 200g serving. One sentence breakdown of the main caloric contributors (e.g. "La mayor parte viene del arroz y el aceite").
 
 ---
 
