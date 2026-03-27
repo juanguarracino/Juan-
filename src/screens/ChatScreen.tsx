@@ -36,20 +36,28 @@ export function ChatScreen() {
 
       {/* Header */}
       <View style={styles.header}>
+        {/* Left: logo + title */}
         <View style={styles.headerLeft}>
           <Text style={styles.headerEmoji}>👨‍🍳</Text>
           <View>
-            <Text style={styles.headerTitle}>Chef IA</Text>
+            <Text style={styles.headerTitle}>Chefcito IA</Text>
             <Text style={styles.headerSubtitle}>
               {isLoading ? 'Pensando recetas...' : 'Listo para cocinar'}
             </Text>
           </View>
         </View>
-        {messages.length > 0 && (
-          <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-            <Text style={styles.clearButtonText}>Limpiar</Text>
-          </TouchableOpacity>
-        )}
+
+        {/* Center: Limpiar button */}
+        <View style={styles.headerCenter}>
+          {messages.length > 0 && (
+            <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
+              <Text style={styles.clearButtonText}>Limpiar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Right: spacer to balance layout */}
+        <View style={styles.headerRight} />
       </View>
 
       {/* Chat area */}
@@ -87,12 +95,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   headerLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    flex: 1,
   },
   headerEmoji: {
     fontSize: 32,

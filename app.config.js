@@ -1,7 +1,7 @@
 export default {
   expo: {
-    name: "Chef IA",
-    slug: "chef-ia",
+    name: "Chefcito IA",
+    slug: "chefcito-ia",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
