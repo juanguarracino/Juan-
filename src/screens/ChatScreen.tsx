@@ -13,7 +13,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useChat } from '../hooks/useChat';
 import { MessageList } from '../components/MessageList';
 import { ChatInput } from '../components/ChatInput';
-import { EmptyState } from '../components/EmptyState';
 import { Colors } from '../constants/Colors';
 
 export function ChatScreen() {
@@ -67,11 +66,7 @@ export function ChatScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={styles.messagesContainer}>
-          {messages.length === 0 && !isLoading ? (
-            <EmptyState onSuggestion={sendMessage} />
-          ) : (
-            <MessageList messages={messages} isLoading={isLoading} />
-          )}
+          <MessageList messages={messages} isLoading={isLoading} />
         </View>
 
         <ChatInput onSend={sendMessage} isLoading={isLoading} />

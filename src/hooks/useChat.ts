@@ -5,6 +5,17 @@ import type { Message, ConversationState, ChatAction, ApiMessage } from '../type
 
 const STORAGE_KEY = '@chef_ia_chat_history';
 
+const GREETING_MESSAGE: Message = {
+  id: 'greeting',
+  role: 'assistant',
+  content: `¡Hola! 👋 Soy **Chefcito IA**, tu asistente de cocina personal.
+
+Contame qué ingredientes tenés en casa y te sugiero **3 recetas** que podés preparar ahora mismo. Perfectas para cocinarle a los chicos o para vos.
+
+¿Qué tenés en la heladera o la despensa?`,
+  timestamp: new Date(),
+};
+
 const initialState: ConversationState = {
   messages: [],
   isLoading: false,
@@ -70,17 +81,23 @@ function deserializeMessages(raw: string): Message[] {
 export function useChat() {
   const [state, dispatch] = useReducer(chatReducer, initialState);
 
-  // Load persisted history on mount
+  // Load persisted history on mount, or show greeting if no history
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((raw) => {
         if (raw) {
           const messages = deserializeMessages(raw);
-          messages.forEach((m) => dispatch({ type: 'RECEIVE_REPLY', message: m }));
+          if (messages.length > 0) {
+            messages.forEach((m) => dispatch({ type: 'RECEIVE_REPLY', message: m }));
+            return;
+          }
         }
+        // No saved history — show the greeting
+        dispatch({ type: 'RECEIVE_REPLY', message: { ...GREETING_MESSAGE, timestamp: new Date() } });
       })
       .catch(() => {
-        // Silently ignore storage errors on first launch
+        // On storage error, still show the greeting
+        dispatch({ type: 'RECEIVE_REPLY', message: { ...GREETING_MESSAGE, timestamp: new Date() } });
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -107,10 +124,10 @@ export function useChat() {
       dispatch({ type: 'SEND_MESSAGE', message: userMessage });
 
       // Build API history from current messages + new user message
-      // Filter out error messages so they don't confuse the model
+      // Filter out error messages and the static greeting (id: 'greeting')
       const apiHistory: ApiMessage[] = [
         ...state.messages
-          .filter((m) => !m.isError)
+          .filter((m) => !m.isError && m.id !== 'greeting')
           .map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: trimmed },
       ];
