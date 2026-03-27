@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import type { Message } from '../types/chat';
@@ -11,15 +11,32 @@ interface Props {
 
 export function MessageList({ messages, isLoading }: Props) {
   const flatListRef = useRef<FlatList<Message>>(null);
+  const prevLengthRef = useRef(0);
 
-  // Auto-scroll to bottom when new messages arrive or loading state changes
   useEffect(() => {
-    if (messages.length > 0 || isLoading) {
-      setTimeout(() => {
+    const prev = prevLengthRef.current;
+    const current = messages.length;
+    prevLengthRef.current = current;
+
+    if (current === 0) return;
+
+    const lastMessage = messages[current - 1];
+    const isNewAssistantMessage = current > prev && lastMessage?.role === 'assistant';
+
+    setTimeout(() => {
+      if (isNewAssistantMessage) {
+        // Scroll so the TOP of the new assistant message is visible
+        flatListRef.current?.scrollToIndex({
+          index: current - 1,
+          animated: true,
+          viewPosition: 0, // 0 = top of item aligned to top of list
+        });
+      } else {
+        // For user messages and loading indicator, scroll to bottom as usual
         flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages.length, isLoading]);
+      }
+    }, 100);
+  }, [messages]);
 
   return (
     <FlatList
@@ -30,8 +47,11 @@ export function MessageList({ messages, isLoading }: Props) {
       contentContainerStyle={styles.contentContainer}
       ListFooterComponent={isLoading ? <TypingIndicator /> : null}
       ListFooterComponentStyle={styles.footer}
-      onContentSizeChange={() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
+      onScrollToIndexFailed={(info) => {
+        // Fallback: if scrollToIndex fails (item not rendered yet), scroll to end
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 200);
       }}
       showsVerticalScrollIndicator={false}
     />
