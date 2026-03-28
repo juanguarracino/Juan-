@@ -25,14 +25,15 @@ export function MessageList({ messages, isLoading }: Props) {
 
     setTimeout(() => {
       if (isNewAssistantMessage) {
-        // Scroll so the TOP of the new assistant message is visible
+        // Scroll to the user message just before the assistant reply,
+        // so the assistant response starts right below the top of the screen.
+        const scrollTarget = Math.max(0, current - 2);
         flatListRef.current?.scrollToIndex({
-          index: current - 1,
+          index: scrollTarget,
           animated: true,
-          viewPosition: 0, // 0 = top of item aligned to top of list
+          viewPosition: 0,
         });
       } else {
-        // For user messages and loading indicator, scroll to bottom as usual
         flatListRef.current?.scrollToEnd({ animated: true });
       }
     }, 100);

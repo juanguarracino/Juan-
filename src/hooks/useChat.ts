@@ -155,6 +155,8 @@ export function useChat() {
   const clearChat = useCallback(async () => {
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     dispatch({ type: 'CLEAR' });
+    // Show greeting again after clearing
+    dispatch({ type: 'RECEIVE_REPLY', message: { ...GREETING_MESSAGE, timestamp: new Date() } });
   }, []);
 
   return {
