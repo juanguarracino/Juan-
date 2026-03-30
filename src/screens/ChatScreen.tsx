@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,28 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useChat } from '../hooks/useChat';
+import { useConversations } from '../hooks/useConversations';
 import { MessageList } from '../components/MessageList';
 import { ChatInput } from '../components/ChatInput';
 import { Colors } from '../constants/Colors';
 
-export function ChatScreen() {
-  const { messages, isLoading, sendMessage, clearChat } = useChat();
+interface Props {
+  conversationId: string;
+  onBack: () => void;
+}
+
+export function ChatScreen({ conversationId, onBack }: Props) {
+  const { updatePreview } = useConversations();
+
+  const handlePreviewUpdate = useCallback(
+    (preview: string) => updatePreview(conversationId, preview),
+    [conversationId, updatePreview]
+  );
+
+  const { messages, isLoading, sendMessage, clearChat } = useChat(
+    conversationId,
+    handlePreviewUpdate
+  );
 
   const handleClear = () => {
     Alert.alert(
@@ -35,8 +51,13 @@ export function ChatScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        {/* Left: logo + title */}
-        <View style={styles.headerLeft}>
+        {/* Back button */}
+        <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
+          <Text style={styles.backIcon}>‹</Text>
+        </TouchableOpacity>
+
+        {/* Center: logo + title */}
+        <View style={styles.headerCenter}>
           <Text style={styles.headerEmoji}>👨‍🍳</Text>
           <View>
             <Text style={styles.headerTitle}>¿Qué Comemos Hoy?</Text>
@@ -46,17 +67,14 @@ export function ChatScreen() {
           </View>
         </View>
 
-        {/* Center: Limpiar button */}
-        <View style={styles.headerCenter}>
+        {/* Right: Limpiar button */}
+        <View style={styles.headerRight}>
           {messages.length > 0 && (
             <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
               <Text style={styles.clearButtonText}>Limpiar</Text>
             </TouchableOpacity>
           )}
         </View>
-
-        {/* Right: spacer to balance layout */}
-        <View style={styles.headerRight} />
       </View>
 
       {/* Chat area */}
@@ -68,7 +86,6 @@ export function ChatScreen() {
         <View style={styles.messagesContainer}>
           <MessageList messages={messages} isLoading={isLoading} />
         </View>
-
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -86,47 +103,57 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: Colors.headerBackground,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerLeft: {
-    flex: 1,
-    flexDirection: 'row',
+  backButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  backIcon: {
+    color: Colors.headerText,
+    fontSize: 36,
+    lineHeight: 38,
+    fontWeight: '300',
   },
   headerCenter: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  headerRight: {
-    flex: 1,
+    gap: 8,
   },
   headerEmoji: {
-    fontSize: 32,
+    fontSize: 28,
   },
   headerTitle: {
     color: Colors.headerText,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
   },
   headerSubtitle: {
     color: 'rgba(255,255,255,0.75)',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 1,
   },
+  headerRight: {
+    minWidth: 68,
+    alignItems: 'flex-end',
+  },
   clearButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
   },
   clearButtonText: {
     color: Colors.headerText,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
   },
   messagesContainer: {

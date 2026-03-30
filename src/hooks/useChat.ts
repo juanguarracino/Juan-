@@ -1,9 +1,8 @@
 import { useReducer, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendMessageToClaude } from '../services/claudeService';
+import { messagesKey } from './useConversations';
 import type { Message, ConversationState, ChatAction, ApiMessage } from '../types/chat';
-
-const STORAGE_KEY = '@chef_ia_chat_history';
 
 const GREETING_MESSAGE: Message = {
   id: 'greeting',
@@ -25,19 +24,9 @@ const initialState: ConversationState = {
 function chatReducer(state: ConversationState, action: ChatAction): ConversationState {
   switch (action.type) {
     case 'SEND_MESSAGE':
-      return {
-        ...state,
-        messages: [...state.messages, action.message],
-        isLoading: true,
-        error: null,
-      };
+      return { ...state, messages: [...state.messages, action.message], isLoading: true, error: null };
     case 'RECEIVE_REPLY':
-      return {
-        ...state,
-        messages: [...state.messages, action.message],
-        isLoading: false,
-        error: null,
-      };
+      return { ...state, messages: [...state.messages, action.message], isLoading: false, error: null };
     case 'SET_ERROR':
       return {
         ...state,
@@ -65,25 +54,27 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-// Serialize messages for storage (Date → ISO string)
 function serializeMessages(messages: Message[]): string {
   return JSON.stringify(
     messages.map((m) => ({ ...m, timestamp: m.timestamp.toISOString() }))
   );
 }
 
-// Deserialize messages from storage (ISO string → Date)
 function deserializeMessages(raw: string): Message[] {
   const parsed = JSON.parse(raw) as Array<Message & { timestamp: string }>;
   return parsed.map((m) => ({ ...m, timestamp: new Date(m.timestamp) }));
 }
 
-export function useChat() {
+export function useChat(
+  conversationId: string,
+  onPreviewUpdate?: (preview: string) => void
+) {
   const [state, dispatch] = useReducer(chatReducer, initialState);
+  const storageKey = messagesKey(conversationId);
 
-  // Load persisted history on mount, or show greeting if no history
+  // Load persisted history on mount
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
+    AsyncStorage.getItem(storageKey)
       .then((raw) => {
         if (raw) {
           const messages = deserializeMessages(raw);
@@ -92,22 +83,20 @@ export function useChat() {
             return;
           }
         }
-        // No saved history — show the greeting
         dispatch({ type: 'RECEIVE_REPLY', message: { ...GREETING_MESSAGE, timestamp: new Date() } });
       })
       .catch(() => {
-        // On storage error, still show the greeting
         dispatch({ type: 'RECEIVE_REPLY', message: { ...GREETING_MESSAGE, timestamp: new Date() } });
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storageKey]);
 
-  // Persist history whenever messages change
+  // Persist whenever messages change
   useEffect(() => {
     if (state.messages.length > 0) {
-      AsyncStorage.setItem(STORAGE_KEY, serializeMessages(state.messages)).catch(() => {});
+      AsyncStorage.setItem(storageKey, serializeMessages(state.messages)).catch(() => {});
     }
-  }, [state.messages]);
+  }, [state.messages, storageKey]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -123,8 +112,6 @@ export function useChat() {
 
       dispatch({ type: 'SEND_MESSAGE', message: userMessage });
 
-      // Build API history from current messages + new user message
-      // Filter out error messages and the static greeting (id: 'greeting')
       const apiHistory: ApiMessage[] = [
         ...state.messages
           .filter((m) => !m.isError && m.id !== 'greeting')
@@ -141,6 +128,7 @@ export function useChat() {
           timestamp: new Date(),
         };
         dispatch({ type: 'RECEIVE_REPLY', message: assistantMessage });
+        onPreviewUpdate?.(trimmed);
       } catch (err) {
         const errorMessage =
           err instanceof Error
@@ -149,15 +137,15 @@ export function useChat() {
         dispatch({ type: 'SET_ERROR', error: errorMessage });
       }
     },
-    [state.messages, state.isLoading]
+    [state.messages, state.isLoading, onPreviewUpdate]
   );
 
   const clearChat = useCallback(async () => {
-    await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    await AsyncStorage.removeItem(storageKey).catch(() => {});
     dispatch({ type: 'CLEAR' });
-    // Show greeting again after clearing
     dispatch({ type: 'RECEIVE_REPLY', message: { ...GREETING_MESSAGE, timestamp: new Date() } });
-  }, []);
+    onPreviewUpdate?.('Nueva conversación');
+  }, [storageKey, onPreviewUpdate]);
 
   return {
     messages: state.messages,

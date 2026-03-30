@@ -1,5 +1,12 @@
 export type Role = 'user' | 'assistant';
 
+export interface Conversation {
+  id: string;
+  name: string;
+  preview: string;
+  createdAt: string; // ISO string
+}
+
 export interface Message {
   id: string;
   role: Role;
