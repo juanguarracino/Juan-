@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -34,13 +35,47 @@ export function ChatScreen({ conversationId, onBack }: Props) {
     handlePreviewUpdate
   );
 
+  const listOpacity = useRef(new Animated.Value(1)).current;
+  const listTranslateY = useRef(new Animated.Value(0)).current;
+
+  const animatedClear = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(listOpacity, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+      Animated.timing(listTranslateY, {
+        toValue: 24,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      clearChat();
+      listTranslateY.setValue(-16);
+      Animated.parallel([
+        Animated.timing(listOpacity, {
+          toValue: 1,
+          duration: 360,
+          useNativeDriver: true,
+        }),
+        Animated.spring(listTranslateY, {
+          toValue: 0,
+          friction: 7,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [clearChat, listOpacity, listTranslateY]);
+
   const handleClear = () => {
     Alert.alert(
       'Limpiar chat',
       '¿Querés borrar toda la conversación?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Borrar', style: 'destructive', onPress: clearChat },
+        { text: 'Borrar', style: 'destructive', onPress: animatedClear },
       ]
     );
   };
@@ -83,9 +118,14 @@ export function ChatScreen({ conversationId, onBack }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
-        <View style={styles.messagesContainer}>
+        <Animated.View
+          style={[
+            styles.messagesContainer,
+            { opacity: listOpacity, transform: [{ translateY: listTranslateY }] },
+          ]}
+        >
           <MessageList messages={messages} isLoading={isLoading} />
-        </View>
+        </Animated.View>
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
       </KeyboardAvoidingView>
     </SafeAreaView>
