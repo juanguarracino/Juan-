@@ -49,13 +49,12 @@ export function MessageBubble({ message }: Props) {
           <Text style={styles.avatarText}>👨‍🍳</Text>
         </View>
       )}
-      <View
-        style={[
-          styles.bubble,
-          isUser ? styles.bubbleUser : styles.bubbleAssistant,
-          isError && styles.bubbleError,
-        ]}
-      >
+
+      <View style={[
+        styles.bubble,
+        isUser ? styles.bubbleUser : styles.bubbleAssistant,
+        isError && styles.bubbleError,
+      ]}>
         {isUser ? (
           <Text style={[styles.userText, isError && styles.errorText]}>
             {message.content}
@@ -63,7 +62,10 @@ export function MessageBubble({ message }: Props) {
         ) : (
           <SimpleMarkdown isError={isError}>{message.content}</SimpleMarkdown>
         )}
-        <Text style={[styles.timestamp, isUser ? styles.timestampUser : styles.timestampAssistant]}>
+        <Text style={[
+          styles.timestamp,
+          isUser ? styles.timestampUser : styles.timestampAssistant,
+        ]}>
           {formatTime(message.timestamp)}
         </Text>
       </View>
@@ -71,11 +73,10 @@ export function MessageBubble({ message }: Props) {
   );
 }
 
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    marginVertical: 3,
+    marginVertical: 5,
     paddingHorizontal: 12,
     alignItems: 'flex-end',
   },
@@ -86,17 +87,22 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primaryLight,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
-    marginBottom: 18,
+    marginRight: 8,
+    marginBottom: 20,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   avatarText: {
-    fontSize: 16,
+    fontSize: 18,
   },
   bubble: {
     maxWidth: '80%',
@@ -106,26 +112,29 @@ const styles = StyleSheet.create({
   },
   bubbleUser: {
     backgroundColor: Colors.bubbleUser,
-    borderRadius: 18,
+    borderRadius: 20,
     borderBottomRightRadius: 4,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   bubbleAssistant: {
     backgroundColor: Colors.bubbleAssistant,
-    borderRadius: 18,
+    borderRadius: 20,
     borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
   },
   bubbleError: {
     backgroundColor: Colors.errorLight,
+    borderColor: 'transparent',
   },
   userText: {
     color: Colors.textPrimary,
@@ -136,11 +145,11 @@ const styles = StyleSheet.create({
     color: Colors.error,
   },
   timestamp: {
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 4,
   },
   timestampUser: {
-    color: Colors.textSecondary,
+    color: 'rgba(0,0,0,0.38)',
     textAlign: 'right',
   },
   timestampAssistant: {
