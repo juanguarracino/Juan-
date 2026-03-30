@@ -4,7 +4,7 @@ export default {
     slug: "que-comemos-hoy",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/logo.png",
     userInterfaceStyle: "light",
     splash: {
       image: "./assets/logo.png",
@@ -17,13 +17,13 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logo.png",
         backgroundColor: "#F5A623",
       },
       package: "com.recipechat.quecomemoshoy",
     },
     web: {
-      favicon: "./assets/favicon.png",
+      favicon: "./assets/logo.png",
     },
     extra: {
       anthropicApiKey: process.env.ANTHROPIC_API_KEY,
