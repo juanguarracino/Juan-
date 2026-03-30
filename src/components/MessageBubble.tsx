@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { SimpleMarkdown } from './SimpleMarkdown';
 import { Colors } from '../constants/Colors';
 import type { Message } from '../types/chat';
@@ -16,8 +16,34 @@ export function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user';
   const isError = message.isError === true;
 
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(isUser ? 6 : 10)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: isUser ? 200 : 320,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        friction: isUser ? 10 : 7,
+        tension: isUser ? 100 : 65,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <View style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>
+    <Animated.View
+      style={[
+        styles.row,
+        isUser ? styles.rowUser : styles.rowAssistant,
+        { opacity, transform: [{ translateY }] },
+      ]}
+    >
       {!isUser && (
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>👨‍🍳</Text>
@@ -41,7 +67,7 @@ export function MessageBubble({ message }: Props) {
           {formatTime(message.timestamp)}
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
