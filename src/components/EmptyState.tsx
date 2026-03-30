@@ -16,7 +16,7 @@ export function EmptyState({ onSuggestion }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.emoji}>👨‍🍳</Text>
-      <Text style={styles.title}>Chefcito IA</Text>
+      <Text style={styles.title}>¿Qué Comemos Hoy?</Text>
       <Text style={styles.subtitle}>
         Contame qué ingredientes tenés en casa y te sugiero varias recetas para cocinar.
       </Text>

@@ -1,7 +1,7 @@
 export default {
   expo: {
-    name: "Chefcito IA",
-    slug: "chefcito-ia",
+    name: "¿Qué Comemos Hoy?",
+    slug: "que-comemos-hoy",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
@@ -9,18 +9,18 @@ export default {
     splash: {
       image: "./assets/splash.png",
       resizeMode: "contain",
-      backgroundColor: "#2E7D32",
+      backgroundColor: "#F5F3EF",
     },
     ios: {
       supportsTablet: false,
-      bundleIdentifier: "com.recipechat.chefia",
+      bundleIdentifier: "com.recipechat.quecomemoshoy",
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#2E7D32",
+        backgroundColor: "#F5A623",
       },
-      package: "com.recipechat.chefia",
+      package: "com.recipechat.quecomemoshoy",
     },
     web: {
       favicon: "./assets/favicon.png",

@@ -8,7 +8,7 @@ const STORAGE_KEY = '@chef_ia_chat_history';
 const GREETING_MESSAGE: Message = {
   id: 'greeting',
   role: 'assistant',
-  content: `¡Hola! 👋 Soy **Chefcito IA**, tu asistente de cocina personal.
+  content: `¡Hola! 👋 Soy **¿Qué Comemos Hoy?**, tu chef chatbot personal.
 
 Contame qué ingredientes tenés en casa y te sugiero **3 recetas** que podés preparar ahora mismo. Perfectas para cocinarle a los chicos o para vos.
 

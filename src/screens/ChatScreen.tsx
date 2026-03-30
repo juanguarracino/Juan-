@@ -39,9 +39,9 @@ export function ChatScreen() {
         <View style={styles.headerLeft}>
           <Text style={styles.headerEmoji}>👨‍🍳</Text>
           <View>
-            <Text style={styles.headerTitle}>Chefcito IA</Text>
+            <Text style={styles.headerTitle}>¿Qué Comemos Hoy?</Text>
             <Text style={styles.headerSubtitle}>
-              {isLoading ? 'Pensando recetas...' : 'Listo para cocinar'}
+              {isLoading ? 'Pensando recetas...' : 'Tu Chef Chatbot'}
             </Text>
           </View>
         </View>
