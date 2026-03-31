@@ -1,62 +1,35 @@
-import { Audio } from 'expo-av';
+import { AudioModule, AudioRecorder, RecordingPresets } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import * as FileSystem from 'expo-file-system';
 
-let activeRecording: Audio.Recording | null = null;
-
-const RECORDING_OPTIONS: Audio.RecordingOptions = {
-  android: {
-    extension: '.m4a',
-    outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-    audioEncoder: Audio.AndroidAudioEncoder.AAC,
-    sampleRate: 44100,
-    numberOfChannels: 1,
-    bitRate: 128000,
-  },
-  ios: {
-    extension: '.m4a',
-    audioQuality: Audio.IOSAudioQuality.HIGH,
-    sampleRate: 44100,
-    numberOfChannels: 1,
-    bitRate: 128000,
-    linearPCMBitDepth: 16,
-    linearPCMIsBigEndian: false,
-    linearPCMIsFloat: false,
-    outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-  },
-  web: {
-    mimeType: 'audio/webm',
-    bitsPerSecond: 128000,
-  },
-};
+let activeRecorder: AudioRecorder | null = null;
 
 export async function requestMicPermission(): Promise<boolean> {
-  const { status } = await Audio.requestPermissionsAsync();
-  return status === 'granted';
+  const { granted } = await AudioModule.requestRecordingPermissionsAsync();
+  return granted;
 }
 
 export async function startRecording(): Promise<void> {
   const granted = await requestMicPermission();
   if (!granted) throw new Error('Permiso de micrófono denegado');
 
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
+  const recorder = new AudioRecorder({
+    ...RecordingPresets.HIGH_QUALITY,
+    extension: '.m4a',
   });
 
-  const { recording } = await Audio.Recording.createAsync(RECORDING_OPTIONS);
-  activeRecording = recording;
+  await recorder.prepareToRecordAsync();
+  recorder.record();
+  activeRecorder = recorder;
 }
 
 export async function stopRecording(): Promise<string> {
-  if (!activeRecording) throw new Error('No hay grabación activa');
+  if (!activeRecorder) throw new Error('No hay grabación activa');
 
-  await activeRecording.stopAndUnloadAsync();
-  const uri = activeRecording.getURI();
-  activeRecording = null;
+  const result = await activeRecorder.stop();
+  activeRecorder = null;
 
-  await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-
+  const uri = result.uri;
   if (!uri) throw new Error('No se pudo obtener el archivo de audio');
 
   const base64 = await FileSystem.readAsStringAsync(uri, {
@@ -67,13 +40,12 @@ export async function stopRecording(): Promise<string> {
 }
 
 export function cancelRecording(): void {
-  if (activeRecording) {
-    activeRecording.stopAndUnloadAsync().catch(() => {});
-    activeRecording = null;
+  if (activeRecorder) {
+    activeRecorder.stop().catch(() => {});
+    activeRecorder = null;
   }
 }
 
-// Strip markdown and emojis before speaking
 function cleanForSpeech(text: string): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -82,14 +54,12 @@ function cleanForSpeech(text: string): string {
     .replace(/---+/g, '. ')
     .replace(/\n{2,}/g, '. ')
     .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
-    .replace(/[🎤🔊]/g, '')
     .trim();
 }
 
 export function speakText(text: string): void {
   Speech.stop();
-  const cleaned = cleanForSpeech(text);
-  Speech.speak(cleaned, {
+  Speech.speak(cleanForSpeech(text), {
     language: 'es-AR',
     rate: 0.92,
     pitch: 1.0,
