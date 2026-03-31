@@ -9,8 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import * as FileSystem from 'expo-file-system';
+import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
 import { AudioButton } from './AudioButton';
-import { startRecording, stopRecording, cancelRecording } from '../services/audioService';
 import { Colors } from '../constants/Colors';
 
 interface Props {
@@ -23,6 +24,8 @@ export function ChatInput({ onSend, onSendVoice, isLoading }: Props) {
   const [text, setText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const canSend = text.trim().length > 0 && !isLoading && !isRecording;
 
@@ -38,25 +41,35 @@ export function ChatInput({ onSend, onSendVoice, isLoading }: Props) {
     if (isLoading) return;
 
     if (isRecording) {
-      // Stop and send
       try {
+        await audioRecorder.stop();
         setIsRecording(false);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        const base64 = await stopRecording();
-        onSendVoice(base64);
-      } catch (err) {
+        const uri = audioRecorder.uri;
+        if (uri) {
+          const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          onSendVoice(base64);
+        }
+      } catch {
+        setIsRecording(false);
         Alert.alert('Error', 'No se pudo procesar el audio. Intentá de nuevo.');
       }
     } else {
-      // Start recording
       try {
-        await startRecording();
+        const { granted } = await AudioModule.requestRecordingPermissionsAsync();
+        if (!granted) {
+          Alert.alert('Sin acceso al micrófono', 'Habilitá el permiso de micrófono en Configuración.');
+          return;
+        }
+        await audioRecorder.prepareToRecordAsync();
+        audioRecorder.record();
         setIsRecording(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'No se pudo acceder al micrófono.';
-        Alert.alert('Sin acceso al micrófono', msg);
-        cancelRecording();
+        Alert.alert('Error', msg);
       }
     }
   };
@@ -85,11 +98,7 @@ export function ChatInput({ onSend, onSendVoice, isLoading }: Props) {
       />
 
       {canSend && (
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={handleSend}
-          activeOpacity={0.75}
-        >
+        <TouchableOpacity style={styles.sendButton} onPress={handleSend} activeOpacity={0.75}>
           <Text style={styles.sendIcon}>➤</Text>
         </TouchableOpacity>
       )}
