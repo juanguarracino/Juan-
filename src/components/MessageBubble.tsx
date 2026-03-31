@@ -68,9 +68,12 @@ export function MessageBubble({ message }: Props) {
       ]}>
         {isUser ? (
           isVoice ? (
-            <View style={styles.voiceRow}>
-              <Text style={styles.voiceIcon}>🎤</Text>
-              <Text style={styles.voiceText}>Mensaje de voz</Text>
+            <View>
+              <View style={styles.voiceLabel}>
+                <Text style={styles.voiceIcon}>🎤</Text>
+                <Text style={styles.voiceLabelText}>Voz</Text>
+              </View>
+              <Text style={styles.userText}>{message.content}</Text>
             </View>
           ) : (
             <Text style={[styles.userText, isError && styles.errorText]}>
@@ -156,17 +159,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.errorLight,
     borderColor: 'transparent',
   },
-  voiceRow: {
+  voiceLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 2,
+    gap: 4,
+    marginBottom: 4,
   },
-  voiceIcon: { fontSize: 18 },
-  voiceText: {
-    fontSize: 14,
-    color: Colors.textPrimary,
-    fontStyle: 'italic',
+  voiceIcon: { fontSize: 12 },
+  voiceLabelText: {
+    fontSize: 11,
+    color: 'rgba(0,0,0,0.45)',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   userText: {
     color: Colors.textPrimary,

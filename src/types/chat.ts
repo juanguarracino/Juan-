@@ -32,4 +32,5 @@ export type ChatAction =
   | { type: 'SEND_MESSAGE'; message: Message }
   | { type: 'RECEIVE_REPLY'; message: Message }
   | { type: 'SET_ERROR'; error: string }
+  | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'CLEAR' };

@@ -45,6 +45,8 @@ function chatReducer(state: ConversationState, action: ChatAction): Conversation
           },
         ],
       };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.loading };
     case 'CLEAR':
       return { ...initialState };
     default:
@@ -120,10 +122,7 @@ export function useChat(
   const buildApiHistory = useCallback((): ApiMessage[] => {
     return state.messages
       .filter((m) => !m.isError && m.id !== 'greeting')
-      .map((m) => ({
-        role: m.role,
-        content: m.isVoice ? '[Mensaje de voz]' : m.content,
-      }));
+      .map((m) => ({ role: m.role, content: m.content }));
   }, [state.messages]);
 
   const sendMessage = useCallback(
@@ -160,21 +159,33 @@ export function useChat(
     async (audioUri: string) => {
       if (state.isLoading) return;
 
-      const userMessage: Message = {
-        id: makeId(),
-        role: 'user',
-        content: '🎤 Mensaje de voz',
-        timestamp: new Date(),
-        isVoice: true,
-      };
-
-      dispatch({ type: 'SEND_MESSAGE', message: userMessage });
-      onPreviewUpdate?.('🎤 Mensaje de voz');
+      // Show loading while transcribing (before we even have the text)
+      dispatch({ type: 'SET_LOADING', loading: true });
       replyWithVoice.current = true;
 
       try {
-        // Transcribe audio → text via Whisper, then send to Claude as text
+        // 1. Transcribe first — so we know the actual text
         const transcribed = await transcribeAudio(audioUri);
+
+        if (!transcribed.trim()) {
+          dispatch({ type: 'SET_LOADING', loading: false });
+          replyWithVoice.current = false;
+          return;
+        }
+
+        // 2. Now dispatch the user message with the REAL transcribed text
+        const userMessage: Message = {
+          id: makeId(),
+          role: 'user',
+          content: transcribed,   // actual text, not a placeholder
+          timestamp: new Date(),
+          isVoice: true,          // keeps the 🎤 icon in the bubble
+        };
+
+        dispatch({ type: 'SEND_MESSAGE', message: userMessage });
+        onPreviewUpdate?.(transcribed);
+
+        // 3. Build history and send to Claude — all real text, no placeholders
         const history: ApiMessage[] = [
           ...buildApiHistory(),
           { role: 'user', content: transcribed },
