@@ -1,6 +1,7 @@
 import { useReducer, useCallback, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { sendMessageToClaude, sendAudioMessageToClaude } from '../services/claudeService';
+import { sendMessageToClaude } from '../services/claudeService';
+import { transcribeAudio } from '../services/whisperService';
 import { speakText } from '../services/audioService';
 import { messagesKey } from './useConversations';
 import type { Message, ConversationState, ChatAction, ApiMessage } from '../types/chat';
@@ -156,7 +157,7 @@ export function useChat(
   );
 
   const sendVoiceMessage = useCallback(
-    async (audioBase64: string) => {
+    async (audioUri: string) => {
       if (state.isLoading) return;
 
       const userMessage: Message = {
@@ -172,7 +173,13 @@ export function useChat(
       replyWithVoice.current = true;
 
       try {
-        const replyText = await sendAudioMessageToClaude(buildApiHistory(), audioBase64);
+        // Transcribe audio → text via Whisper, then send to Claude as text
+        const transcribed = await transcribeAudio(audioUri);
+        const history: ApiMessage[] = [
+          ...buildApiHistory(),
+          { role: 'user', content: transcribed },
+        ];
+        const replyText = await sendMessageToClaude(history);
         handleReply(replyText);
       } catch (err) {
         replyWithVoice.current = false;

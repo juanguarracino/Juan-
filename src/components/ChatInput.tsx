@@ -9,14 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import * as FileSystem from 'expo-file-system';
 import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
 import { AudioButton } from './AudioButton';
 import { Colors } from '../constants/Colors';
 
 interface Props {
   onSend: (text: string) => void;
-  onSendVoice: (base64: string) => void;
+  onSendVoice: (uri: string) => void;
   isLoading: boolean;
 }
 
@@ -47,10 +46,7 @@ export function ChatInput({ onSend, onSendVoice, isLoading }: Props) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
         const uri = audioRecorder.uri;
         if (uri) {
-          const base64 = await FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          onSendVoice(base64);
+          onSendVoice(uri);
         }
       } catch {
         setIsRecording(false);
