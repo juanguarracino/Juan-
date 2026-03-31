@@ -1,6 +1,7 @@
-import { useReducer, useCallback, useEffect } from 'react';
+import { useReducer, useCallback, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { sendMessageToClaude } from '../services/claudeService';
+import { sendMessageToClaude, sendAudioMessageToClaude } from '../services/claudeService';
+import { speakText } from '../services/audioService';
 import { messagesKey } from './useConversations';
 import type { Message, ConversationState, ChatAction, ApiMessage } from '../types/chat';
 
@@ -71,8 +72,9 @@ export function useChat(
 ) {
   const [state, dispatch] = useReducer(chatReducer, initialState);
   const storageKey = messagesKey(conversationId);
+  // Track whether last user message was voice, so we auto-speak the reply
+  const replyWithVoice = useRef(false);
 
-  // Load persisted history on mount
   useEffect(() => {
     AsyncStorage.getItem(storageKey)
       .then((raw) => {
@@ -91,12 +93,37 @@ export function useChat(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
-  // Persist whenever messages change
   useEffect(() => {
     if (state.messages.length > 0) {
       AsyncStorage.setItem(storageKey, serializeMessages(state.messages)).catch(() => {});
     }
   }, [state.messages, storageKey]);
+
+  const handleReply = useCallback(
+    (replyText: string) => {
+      const assistantMessage: Message = {
+        id: makeId(),
+        role: 'assistant',
+        content: replyText,
+        timestamp: new Date(),
+      };
+      dispatch({ type: 'RECEIVE_REPLY', message: assistantMessage });
+      if (replyWithVoice.current) {
+        speakText(replyText);
+        replyWithVoice.current = false;
+      }
+    },
+    []
+  );
+
+  const buildApiHistory = useCallback((): ApiMessage[] => {
+    return state.messages
+      .filter((m) => !m.isError && m.id !== 'greeting')
+      .map((m) => ({
+        role: m.role,
+        content: m.isVoice ? '[Mensaje de voz]' : m.content,
+      }));
+  }, [state.messages]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -111,33 +138,49 @@ export function useChat(
       };
 
       dispatch({ type: 'SEND_MESSAGE', message: userMessage });
-
-      const apiHistory: ApiMessage[] = [
-        ...state.messages
-          .filter((m) => !m.isError && m.id !== 'greeting')
-          .map((m) => ({ role: m.role, content: m.content })),
-        { role: 'user', content: trimmed },
-      ];
+      onPreviewUpdate?.(trimmed);
 
       try {
-        const replyText = await sendMessageToClaude(apiHistory);
-        const assistantMessage: Message = {
-          id: makeId(),
-          role: 'assistant',
-          content: replyText,
-          timestamp: new Date(),
-        };
-        dispatch({ type: 'RECEIVE_REPLY', message: assistantMessage });
-        onPreviewUpdate?.(trimmed);
+        const history: ApiMessage[] = [
+          ...buildApiHistory(),
+          { role: 'user', content: trimmed },
+        ];
+        const replyText = await sendMessageToClaude(history);
+        handleReply(replyText);
       } catch (err) {
-        const errorMessage =
-          err instanceof Error
-            ? `Oops, something went wrong: ${err.message}`
-            : 'Oops, something went wrong. Please try again.';
-        dispatch({ type: 'SET_ERROR', error: errorMessage });
+        const msg = err instanceof Error ? `Oops: ${err.message}` : 'Oops, intentá de nuevo.';
+        dispatch({ type: 'SET_ERROR', error: msg });
       }
     },
-    [state.messages, state.isLoading, onPreviewUpdate]
+    [state.messages, state.isLoading, buildApiHistory, handleReply, onPreviewUpdate]
+  );
+
+  const sendVoiceMessage = useCallback(
+    async (audioBase64: string) => {
+      if (state.isLoading) return;
+
+      const userMessage: Message = {
+        id: makeId(),
+        role: 'user',
+        content: '🎤 Mensaje de voz',
+        timestamp: new Date(),
+        isVoice: true,
+      };
+
+      dispatch({ type: 'SEND_MESSAGE', message: userMessage });
+      onPreviewUpdate?.('🎤 Mensaje de voz');
+      replyWithVoice.current = true;
+
+      try {
+        const replyText = await sendAudioMessageToClaude(buildApiHistory(), audioBase64);
+        handleReply(replyText);
+      } catch (err) {
+        replyWithVoice.current = false;
+        const msg = err instanceof Error ? `Oops: ${err.message}` : 'Oops, intentá de nuevo.';
+        dispatch({ type: 'SET_ERROR', error: msg });
+      }
+    },
+    [state.isLoading, buildApiHistory, handleReply, onPreviewUpdate]
   );
 
   const clearChat = useCallback(async () => {
@@ -151,6 +194,7 @@ export function useChat(
     messages: state.messages,
     isLoading: state.isLoading,
     sendMessage,
+    sendVoiceMessage,
     clearChat,
   };
 }

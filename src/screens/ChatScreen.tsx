@@ -30,7 +30,7 @@ export function ChatScreen({ conversationId, onBack }: Props) {
     [conversationId, updatePreview]
   );
 
-  const { messages, isLoading, sendMessage, clearChat } = useChat(
+  const { messages, isLoading, sendMessage, sendVoiceMessage, clearChat } = useChat(
     conversationId,
     handlePreviewUpdate
   );
@@ -126,7 +126,7 @@ export function ChatScreen({ conversationId, onBack }: Props) {
         >
           <MessageList messages={messages} isLoading={isLoading} />
         </Animated.View>
-        <ChatInput onSend={sendMessage} isLoading={isLoading} />
+        <ChatInput onSend={sendMessage} onSendVoice={sendVoiceMessage} isLoading={isLoading} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

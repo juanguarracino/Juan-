@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { SimpleMarkdown } from './SimpleMarkdown';
+import { speakText, stopSpeaking, isSpeakingAsync } from '../services/audioService';
 import { Colors } from '../constants/Colors';
 import type { Message } from '../types/chat';
 
@@ -15,6 +16,7 @@ function formatTime(date: Date): string {
 export function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user';
   const isError = message.isError === true;
+  const isVoice = message.isVoice === true;
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(isUser ? 6 : 10)).current;
@@ -36,6 +38,15 @@ export function MessageBubble({ message }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleSpeak = async () => {
+    const speaking = await isSpeakingAsync();
+    if (speaking) {
+      stopSpeaking();
+    } else {
+      speakText(message.content);
+    }
+  };
+
   return (
     <Animated.View
       style={[
@@ -56,18 +67,33 @@ export function MessageBubble({ message }: Props) {
         isError && styles.bubbleError,
       ]}>
         {isUser ? (
-          <Text style={[styles.userText, isError && styles.errorText]}>
-            {message.content}
-          </Text>
+          isVoice ? (
+            <View style={styles.voiceRow}>
+              <Text style={styles.voiceIcon}>🎤</Text>
+              <Text style={styles.voiceText}>Mensaje de voz</Text>
+            </View>
+          ) : (
+            <Text style={[styles.userText, isError && styles.errorText]}>
+              {message.content}
+            </Text>
+          )
         ) : (
           <SimpleMarkdown isError={isError}>{message.content}</SimpleMarkdown>
         )}
-        <Text style={[
-          styles.timestamp,
-          isUser ? styles.timestampUser : styles.timestampAssistant,
-        ]}>
-          {formatTime(message.timestamp)}
-        </Text>
+
+        <View style={styles.footer}>
+          <Text style={[
+            styles.timestamp,
+            isUser ? styles.timestampUser : styles.timestampAssistant,
+          ]}>
+            {formatTime(message.timestamp)}
+          </Text>
+          {!isUser && !isError && (
+            <TouchableOpacity onPress={handleSpeak} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+              <Text style={styles.speakIcon}>🔊</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </Animated.View>
   );
@@ -80,12 +106,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     alignItems: 'flex-end',
   },
-  rowUser: {
-    justifyContent: 'flex-end',
-  },
-  rowAssistant: {
-    justifyContent: 'flex-start',
-  },
+  rowUser: { justifyContent: 'flex-end' },
+  rowAssistant: { justifyContent: 'flex-start' },
   avatar: {
     width: 36,
     height: 36,
@@ -101,9 +123,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  avatarText: {
-    fontSize: 18,
-  },
+  avatarText: { fontSize: 18 },
   bubble: {
     maxWidth: '80%',
     paddingHorizontal: 14,
@@ -136,24 +156,41 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.errorLight,
     borderColor: 'transparent',
   },
+  voiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  voiceIcon: { fontSize: 18 },
+  voiceText: {
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontStyle: 'italic',
+  },
   userText: {
     color: Colors.textPrimary,
     fontSize: 15,
     lineHeight: 22,
   },
-  errorText: {
-    color: Colors.error,
-  },
-  timestamp: {
-    fontSize: 10,
+  errorText: { color: Colors.error },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 4,
+    gap: 6,
   },
+  timestamp: { fontSize: 10 },
   timestampUser: {
     color: 'rgba(0,0,0,0.38)',
     textAlign: 'right',
+    flex: 1,
   },
   timestampAssistant: {
     color: Colors.textSecondary,
     textAlign: 'left',
+    flex: 1,
   },
+  speakIcon: { fontSize: 13 },
 });

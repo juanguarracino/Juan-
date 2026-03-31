@@ -13,6 +13,7 @@ export interface Message {
   content: string;
   timestamp: Date;
   isError?: boolean;
+  isVoice?: boolean; // true if user sent this as audio
 }
 
 // Shape expected by the Anthropic API

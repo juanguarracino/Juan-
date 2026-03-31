@@ -38,3 +38,38 @@ export async function sendMessageToClaude(history: ApiMessage[]): Promise<string
   }
   return block.text;
 }
+
+export async function sendAudioMessageToClaude(
+  history: ApiMessage[],
+  audioBase64: string
+): Promise<string> {
+  const messages = [
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+    {
+      role: 'user' as const,
+      content: [
+        {
+          type: 'input_audio',
+          source: {
+            type: 'base64',
+            media_type: 'audio/mp4',
+            data: audioBase64,
+          },
+        },
+      ] as any,
+    },
+  ];
+
+  const response = await getClient().messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1500,
+    system: RECIPE_SYSTEM_PROMPT,
+    messages: messages as any,
+  });
+
+  const block = response.content[0];
+  if (!block || block.type !== 'text') {
+    throw new Error('Unexpected response from Claude API');
+  }
+  return block.text;
+}

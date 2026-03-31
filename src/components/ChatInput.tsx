@@ -6,20 +6,25 @@ import {
   StyleSheet,
   Platform,
   Text,
+  Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { AudioButton } from './AudioButton';
+import { startRecording, stopRecording, cancelRecording } from '../services/audioService';
 import { Colors } from '../constants/Colors';
 
 interface Props {
   onSend: (text: string) => void;
+  onSendVoice: (base64: string) => void;
   isLoading: boolean;
 }
 
-export function ChatInput({ onSend, isLoading }: Props) {
+export function ChatInput({ onSend, onSendVoice, isLoading }: Props) {
   const [text, setText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  const canSend = text.trim().length > 0 && !isLoading;
+  const canSend = text.trim().length > 0 && !isLoading && !isRecording;
 
   const handleSend = () => {
     if (!canSend) return;
@@ -29,30 +34,65 @@ export function ChatInput({ onSend, isLoading }: Props) {
     onSend(trimmed);
   };
 
+  const handleMicPress = async () => {
+    if (isLoading) return;
+
+    if (isRecording) {
+      // Stop and send
+      try {
+        setIsRecording(false);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        const base64 = await stopRecording();
+        onSendVoice(base64);
+      } catch (err) {
+        Alert.alert('Error', 'No se pudo procesar el audio. Intentá de nuevo.');
+      }
+    } else {
+      // Start recording
+      try {
+        await startRecording();
+        setIsRecording(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'No se pudo acceder al micrófono.';
+        Alert.alert('Sin acceso al micrófono', msg);
+        cancelRecording();
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
         ref={inputRef}
-        style={styles.input}
-        value={text}
+        style={[styles.input, isRecording && styles.inputRecording]}
+        value={isRecording ? '' : text}
         onChangeText={setText}
-        placeholder="¿Qué ingredientes tenés en casa?"
-        placeholderTextColor={Colors.textSecondary}
+        placeholder={isRecording ? '🔴 Grabando...' : '¿Qué ingredientes tenés en casa?'}
+        placeholderTextColor={isRecording ? '#EF5350' : Colors.textSecondary}
         multiline
         maxLength={500}
         returnKeyType="send"
         blurOnSubmit={false}
         onSubmitEditing={handleSend}
-        editable={!isLoading}
+        editable={!isLoading && !isRecording}
       />
-      <TouchableOpacity
-        style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
-        onPress={handleSend}
-        disabled={!canSend}
-        activeOpacity={0.75}
-      >
-        <Text style={styles.sendIcon}>➤</Text>
-      </TouchableOpacity>
+
+      <AudioButton
+        isRecording={isRecording}
+        disabled={isLoading}
+        onPress={handleMicPress}
+      />
+
+      {canSend && (
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={handleSend}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.sendIcon}>➤</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -66,6 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.inputBorder,
+    gap: 8,
     ...Platform.select({
       ios: {
         shadowColor: Colors.shadow,
@@ -73,9 +114,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.07,
         shadowRadius: 6,
       },
-      android: {
-        elevation: 6,
-      },
+      android: { elevation: 6 },
     }),
   },
   input: {
@@ -91,7 +130,10 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 12 : 11,
     fontSize: 15,
     color: Colors.textPrimary,
-    marginRight: 10,
+  },
+  inputRecording: {
+    borderColor: '#EF5350',
+    backgroundColor: '#FFF5F5',
   },
   sendButton: {
     width: 46,
@@ -105,11 +147,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 4,
     elevation: 4,
-  },
-  sendButtonDisabled: {
-    backgroundColor: Colors.inputBorder,
-    shadowOpacity: 0,
-    elevation: 0,
   },
   sendIcon: {
     color: Colors.textOnPrimary,
