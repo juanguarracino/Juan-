@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { SimpleMarkdown } from './SimpleMarkdown';
+import { VoicePlayer } from './VoicePlayer';
 import { speakText, stopSpeaking, isSpeakingAsync } from '../services/audioService';
 import { Colors } from '../constants/Colors';
 import type { Message } from '../types/chat';
@@ -67,14 +68,8 @@ export function MessageBubble({ message }: Props) {
         isError && styles.bubbleError,
       ]}>
         {isUser ? (
-          isVoice ? (
-            <View>
-              <View style={styles.voiceLabel}>
-                <Text style={styles.voiceIcon}>🎤</Text>
-                <Text style={styles.voiceLabelText}>Voz</Text>
-              </View>
-              <Text style={styles.userText}>{message.content}</Text>
-            </View>
+          isVoice && message.audioUri ? (
+            <VoicePlayer uri={message.audioUri} transcription={message.content} />
           ) : (
             <Text style={[styles.userText, isError && styles.errorText]}>
               {message.content}
@@ -158,19 +153,6 @@ const styles = StyleSheet.create({
   bubbleError: {
     backgroundColor: Colors.errorLight,
     borderColor: 'transparent',
-  },
-  voiceLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
-  },
-  voiceIcon: { fontSize: 12 },
-  voiceLabelText: {
-    fontSize: 11,
-    color: 'rgba(0,0,0,0.45)',
-    fontWeight: '600',
-    letterSpacing: 0.3,
   },
   userText: {
     color: Colors.textPrimary,

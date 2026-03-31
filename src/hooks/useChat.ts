@@ -159,12 +159,10 @@ export function useChat(
     async (audioUri: string) => {
       if (state.isLoading) return;
 
-      // Show loading while transcribing (before we even have the text)
       dispatch({ type: 'SET_LOADING', loading: true });
       replyWithVoice.current = true;
 
       try {
-        // 1. Transcribe first — so we know the actual text
         const transcribed = await transcribeAudio(audioUri);
 
         if (!transcribed.trim()) {
@@ -173,19 +171,18 @@ export function useChat(
           return;
         }
 
-        // 2. Now dispatch the user message with the REAL transcribed text
         const userMessage: Message = {
           id: makeId(),
           role: 'user',
-          content: transcribed,   // actual text, not a placeholder
+          content: transcribed,
           timestamp: new Date(),
-          isVoice: true,          // keeps the 🎤 icon in the bubble
+          isVoice: true,
+          audioUri,              // save URI so the bubble can replay it
         };
 
         dispatch({ type: 'SEND_MESSAGE', message: userMessage });
         onPreviewUpdate?.(transcribed);
 
-        // 3. Build history and send to Claude — all real text, no placeholders
         const history: ApiMessage[] = [
           ...buildApiHistory(),
           { role: 'user', content: transcribed },

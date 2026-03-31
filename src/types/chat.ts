@@ -13,7 +13,8 @@ export interface Message {
   content: string;
   timestamp: Date;
   isError?: boolean;
-  isVoice?: boolean; // true if user sent this as audio
+  isVoice?: boolean;
+  audioUri?: string; // local URI of the recorded audio for playback
 }
 
 // Shape expected by the Anthropic API
