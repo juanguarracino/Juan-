@@ -110,7 +110,7 @@ export function useChat(
       };
       dispatch({ type: 'RECEIVE_REPLY', message: assistantMessage });
       if (replyWithVoice.current) {
-        speakText(replyText);
+        speakText(replyText).catch(() => {});
         replyWithVoice.current = false;
       }
     },

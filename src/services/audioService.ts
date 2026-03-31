@@ -11,10 +11,23 @@ function cleanForSpeech(text: string): string {
     .trim();
 }
 
-export function speakText(text: string): void {
+export async function speakText(text: string): Promise<void> {
   Speech.stop();
+
+  // Pick the best available Spanish voice
+  let language = 'es';
+  try {
+    const voices = await Speech.getAvailableVoicesAsync();
+    const spanish = voices.find(
+      (v) => v.language.startsWith('es-AR') || v.language.startsWith('es-419')
+    ) ?? voices.find((v) => v.language.startsWith('es'));
+    if (spanish) language = spanish.language;
+  } catch {
+    // fallback to 'es'
+  }
+
   Speech.speak(cleanForSpeech(text), {
-    language: 'es-AR',
+    language,
     rate: 0.92,
     pitch: 1.0,
   });

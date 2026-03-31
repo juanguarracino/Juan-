@@ -43,7 +43,7 @@ export function MessageBubble({ message }: Props) {
     if (speaking) {
       stopSpeaking();
     } else {
-      speakText(message.content);
+      speakText(message.content).catch(() => {});
     }
   };
 
