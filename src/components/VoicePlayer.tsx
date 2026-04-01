@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { AudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Colors } from '../constants/Colors';
 
 interface Props {
@@ -22,8 +22,16 @@ function formatSeconds(s: number): string {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-export function VoicePlayer({ uri, transcription }: Props) {
-  const player = useAudioPlayer({ uri });
+function createPlayer(uri: string): AudioPlayer | null {
+  try {
+    // Native module requires 4 args: source, updateInterval, pitchCorrectionQuality, shouldCorrectPitch
+    return new (AudioPlayer as any)({ uri }, 250, 'low', false) as AudioPlayer;
+  } catch {
+    return null;
+  }
+}
+
+function PlayerInner({ player, transcription }: { player: AudioPlayer; transcription: string }) {
   const status = useAudioPlayerStatus(player);
   const barAnims = useRef(BARS.map(() => new Animated.Value(1))).current;
 
@@ -31,7 +39,6 @@ export function VoicePlayer({ uri, transcription }: Props) {
   const duration = status.duration ?? 0;
   const currentTime = status.currentTime ?? 0;
 
-  // Animate bars while playing
   useEffect(() => {
     if (isPlaying) {
       const animations = barAnims.map((anim, i) =>
@@ -51,25 +58,25 @@ export function VoicePlayer({ uri, transcription }: Props) {
   }, [isPlaying, barAnims]);
 
   const handlePress = () => {
-    if (isPlaying) {
-      player.pause();
-    } else {
-      if (status.currentTime >= (status.duration ?? 0) - 0.1) {
-        player.seekTo(0);
+    try {
+      if (isPlaying) {
+        player.pause();
+      } else {
+        if (currentTime >= duration - 0.1) {
+          player.seekTo(0);
+        }
+        player.play();
       }
-      player.play();
-    }
+    } catch {}
   };
 
   return (
     <View style={styles.container}>
-      {/* Player row */}
       <View style={styles.playerRow}>
         <TouchableOpacity style={styles.playBtn} onPress={handlePress} activeOpacity={0.75}>
           <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
         </TouchableOpacity>
 
-        {/* Animated waveform bars */}
         <View style={styles.waveform}>
           {BARS.map((height, i) => (
             <Animated.View
@@ -91,12 +98,49 @@ export function VoicePlayer({ uri, transcription }: Props) {
         </Text>
       </View>
 
-      {/* Transcription subtitle */}
       {transcription ? (
         <Text style={styles.transcription}>"{transcription}"</Text>
       ) : null}
     </View>
   );
+}
+
+export function VoicePlayer({ uri, transcription }: Props) {
+  const [player, setPlayer] = useState<AudioPlayer | null>(null);
+
+  useEffect(() => {
+    const p = createPlayer(uri);
+    setPlayer(p);
+    return () => {
+      try { (p as any)?.remove?.(); } catch {}
+    };
+  }, [uri]);
+
+  if (!player) {
+    // Fallback while player initializes or if creation failed
+    return (
+      <View style={styles.container}>
+        <View style={styles.playerRow}>
+          <View style={[styles.playBtn, { opacity: 0.5 }]}>
+            <Text style={styles.playIcon}>▶</Text>
+          </View>
+          <View style={styles.waveform}>
+            {BARS.map((height, i) => (
+              <View
+                key={i}
+                style={[styles.bar, { height: height * 2.2, backgroundColor: Colors.inputBorder }]}
+              />
+            ))}
+          </View>
+        </View>
+        {transcription ? (
+          <Text style={styles.transcription}>"{transcription}"</Text>
+        ) : null}
+      </View>
+    );
+  }
+
+  return <PlayerInner player={player} transcription={transcription} />;
 }
 
 const styles = StyleSheet.create({
