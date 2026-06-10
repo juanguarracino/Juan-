@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -23,6 +22,13 @@ function formatDate(iso: string): string {
   const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+}
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Buen día';
+  if (hour < 20) return 'Buenas tardes';
+  return 'Buenas noches';
 }
 
 const CARD_EMOJIS = ['🍲', '🥘', '🍝', '🥗', '🍳', '🌮', '🍕', '🥪'];
@@ -58,16 +64,9 @@ export function ConversationListScreen({ onOpen }: Props) {
 
       {/* Hero header */}
       <View style={styles.hero}>
-        <View style={styles.heroText}>
-          <Text style={styles.heroGreeting}>¡Hola! 👋</Text>
-          <Text style={styles.heroTitle}>¿Qué comemos{'\n'}hoy?</Text>
-          <Text style={styles.heroSubtitle}>Tu chef personal, siempre listo</Text>
-        </View>
-        <Image
-          source={require('../../assets/logo.png')}
-          style={styles.heroLogo}
-          resizeMode="contain"
-        />
+        <Text style={styles.heroGreeting}>{greeting()} 👋</Text>
+        <Text style={styles.heroTitle}>¿Qué comemos hoy?</Text>
+        <Text style={styles.heroSubtitle}>Tu chef personal, siempre listo</Text>
       </View>
 
       {/* Section label */}
@@ -136,36 +135,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   hero: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 18,
-    paddingBottom: 10,
-  },
-  heroText: {
-    flex: 1,
+    paddingTop: 22,
+    paddingBottom: 14,
   },
   heroGreeting: {
     fontSize: 15,
     color: Colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 4,
   },
   heroTitle: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '800',
     color: Colors.secondary,
     marginBottom: 6,
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     color: Colors.textSecondary,
-  },
-  heroLogo: {
-    width: 96,
-    height: 96,
-    borderRadius: 22,
   },
   sectionLabel: {
     fontSize: 11,
