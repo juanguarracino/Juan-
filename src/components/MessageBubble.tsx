@@ -1,9 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Share } from 'react-native';
 import { SimpleMarkdown } from './SimpleMarkdown';
 import { VoicePlayer } from './VoicePlayer';
 import { speakText, stopSpeaking, isSpeakingAsync } from '../services/audioService';
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../theme/ThemeContext';
 import type { Message } from '../types/chat';
 
 interface Props {
@@ -15,9 +15,12 @@ function formatTime(date: Date): string {
 }
 
 export function MessageBubble({ message }: Props) {
+  const { colors, isFavorite, toggleFavorite } = useTheme();
   const isUser = message.role === 'user';
   const isError = message.isError === true;
   const isVoice = message.isVoice === true;
+  const isGreeting = message.id === 'greeting';
+  const fav = !isUser && !isError && isFavorite(message.content);
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(isUser ? 6 : 10)).current;
@@ -48,6 +51,12 @@ export function MessageBubble({ message }: Props) {
     }
   };
 
+  const handleShare = () => {
+    Share.share({
+      message: `${message.content}\n\n🍳 Compartido desde ¿Qué Comemos Hoy?`,
+    }).catch(() => {});
+  };
+
   return (
     <Animated.View
       style={[
@@ -57,21 +66,23 @@ export function MessageBubble({ message }: Props) {
       ]}
     >
       {!isUser && (
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryLight, shadowColor: colors.shadow }]}>
           <Text style={styles.avatarText}>👨‍🍳</Text>
         </View>
       )}
 
       <View style={[
         styles.bubble,
-        isUser ? styles.bubbleUser : styles.bubbleAssistant,
-        isError && styles.bubbleError,
+        isUser
+          ? [styles.bubbleUser, { backgroundColor: colors.bubbleUser, shadowColor: colors.primary }]
+          : [styles.bubbleAssistant, { backgroundColor: colors.bubbleAssistant, shadowColor: colors.shadow }],
+        isError && { backgroundColor: colors.errorLight },
       ]}>
         {isUser ? (
           isVoice && message.audioUri ? (
             <VoicePlayer uri={message.audioUri} transcription={message.content} />
           ) : (
-            <Text style={[styles.userText, isError && styles.errorText]}>
+            <Text style={[styles.userText, isError && { color: colors.error }]}>
               {message.content}
             </Text>
           )
@@ -82,14 +93,29 @@ export function MessageBubble({ message }: Props) {
         <View style={styles.footer}>
           <Text style={[
             styles.timestamp,
-            isUser ? styles.timestampUser : styles.timestampAssistant,
+            isUser ? styles.timestampUser : { color: colors.textSecondary, textAlign: 'left' as const, flex: 1 },
           ]}>
             {formatTime(message.timestamp)}
           </Text>
           {!isUser && !isError && (
-            <TouchableOpacity onPress={handleSpeak} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-              <Text style={styles.speakIcon}>🔊</Text>
-            </TouchableOpacity>
+            <View style={styles.actions}>
+              {!isGreeting && (
+                <>
+                  <TouchableOpacity
+                    onPress={() => toggleFavorite(message.content)}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Text style={[styles.actionIcon, !fav && styles.actionIconOff]}>⭐</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleShare} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                    <Text style={styles.actionIcon}>📤</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+              <TouchableOpacity onPress={handleSpeak} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                <Text style={styles.actionIcon}>🔊</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
@@ -110,12 +136,10 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
     marginBottom: 20,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -129,34 +153,26 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   bubbleUser: {
-    backgroundColor: Colors.bubbleUser,
     borderRadius: 20,
     borderBottomRightRadius: 5,
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 3,
   },
   bubbleAssistant: {
-    backgroundColor: Colors.bubbleAssistant,
     borderRadius: 20,
     borderBottomLeftRadius: 5,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
-  bubbleError: {
-    backgroundColor: Colors.errorLight,
-  },
   userText: {
-    color: Colors.bubbleUserText,
+    color: '#FFFFFF',
     fontSize: 15,
     lineHeight: 22,
   },
-  errorText: { color: Colors.error },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -170,10 +186,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flex: 1,
   },
-  timestampAssistant: {
-    color: Colors.textSecondary,
-    textAlign: 'left',
-    flex: 1,
-  },
-  speakIcon: { fontSize: 13 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  actionIcon: { fontSize: 14 },
+  actionIconOff: { opacity: 0.35 },
 });

@@ -15,7 +15,7 @@ import { useChat } from '../hooks/useChat';
 import { useConversations } from '../hooks/useConversations';
 import { MessageList } from '../components/MessageList';
 import { ChatInput } from '../components/ChatInput';
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   conversationId: string;
@@ -24,6 +24,7 @@ interface Props {
 
 export function ChatScreen({ conversationId, onBack }: Props) {
   const { updatePreview } = useConversations();
+  const { colors, isDark } = useTheme();
 
   const handlePreviewUpdate = useCallback(
     (preview: string) => updatePreview(conversationId, preview),
@@ -80,38 +81,50 @@ export function ChatScreen({ conversationId, onBack }: Props) {
     );
   };
 
+  // Solo el saludo del bot → mostrar chips de ingredientes
+  const showSuggestions = messages.length <= 1;
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.headerBackground }]} edges={['top']}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Header */}
-      <View style={styles.header}>
-        {/* Back button */}
+      <View style={[styles.header, {
+        backgroundColor: colors.headerBackground,
+        borderBottomColor: colors.separator,
+        shadowColor: colors.shadow,
+      }]}>
         <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: colors.secondary }]}>‹</Text>
         </TouchableOpacity>
 
-        {/* Center: avatar + title */}
         <View style={styles.headerCenter}>
-          <View style={styles.headerAvatar}>
+          <View style={[styles.headerAvatar, { backgroundColor: colors.primaryLight }]}>
             <Text style={styles.headerEmoji}>👨‍🍳</Text>
           </View>
           <View>
-            <Text style={styles.headerTitle}>El Chef</Text>
+            <Text style={[styles.headerTitle, { color: colors.secondary }]}>El Chef</Text>
             <View style={styles.statusRow}>
-              <View style={[styles.statusDot, isLoading && styles.statusDotBusy]} />
-              <Text style={[styles.headerSubtitle, isLoading && styles.headerSubtitleBusy]}>
+              <View style={[styles.statusDot, { backgroundColor: isLoading ? colors.primary : '#4CAF50' }]} />
+              <Text style={[
+                styles.headerSubtitle,
+                { color: isLoading ? colors.primaryDark : colors.textSecondary },
+                isLoading && styles.headerSubtitleBusy,
+              ]}>
                 {isLoading ? 'Pensando recetas...' : 'En línea'}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Right: Limpiar button */}
         <View style={styles.headerRight}>
           {messages.length > 0 && (
-            <TouchableOpacity onPress={handleClear} style={styles.clearButton} activeOpacity={0.7}>
-              <Text style={styles.clearButtonText}>Limpiar</Text>
+            <TouchableOpacity
+              onPress={handleClear}
+              style={[styles.clearButton, { backgroundColor: colors.background, borderColor: colors.separator }]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.clearButtonText, { color: colors.textSecondary }]}>Limpiar</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -119,7 +132,7 @@ export function ChatScreen({ conversationId, onBack }: Props) {
 
       {/* Chat area */}
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={[styles.flex, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
@@ -131,30 +144,26 @@ export function ChatScreen({ conversationId, onBack }: Props) {
         >
           <MessageList messages={messages} isLoading={isLoading} />
         </Animated.View>
-        <ChatInput onSend={sendMessage} onSendVoice={sendVoiceMessage} isLoading={isLoading} />
+        <ChatInput
+          onSend={sendMessage}
+          onSendVoice={sendVoiceMessage}
+          isLoading={isLoading}
+          showSuggestions={showSuggestions}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.headerBackground,
-  },
-  flex: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  safeArea: { flex: 1 },
+  flex: { flex: 1 },
   header: {
-    backgroundColor: Colors.headerBackground,
     paddingHorizontal: 10,
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.separator,
-    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -168,7 +177,6 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   backIcon: {
-    color: Colors.secondary,
     fontSize: 34,
     lineHeight: 36,
     fontWeight: '400',
@@ -183,59 +191,27 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerEmoji: {
-    fontSize: 22,
-  },
-  headerTitle: {
-    color: Colors.secondary,
-    fontSize: 17,
-    fontWeight: '800',
-  },
+  headerEmoji: { fontSize: 22 },
+  headerTitle: { fontSize: 17, fontWeight: '800' },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     marginTop: 2,
   },
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
-  },
-  statusDotBusy: {
-    backgroundColor: Colors.primary,
-  },
-  headerSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-  },
-  headerSubtitleBusy: {
-    color: Colors.primaryDark,
-    fontWeight: '600',
-  },
-  headerRight: {
-    minWidth: 66,
-    alignItems: 'flex-end',
-  },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  headerSubtitle: { fontSize: 12 },
+  headerSubtitleBusy: { fontWeight: '600' },
+  headerRight: { minWidth: 66, alignItems: 'flex-end' },
   clearButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
-    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: Colors.separator,
   },
-  clearButtonText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  messagesContainer: {
-    flex: 1,
-  },
+  clearButtonText: { fontSize: 12, fontWeight: '600' },
+  messagesContainer: { flex: 1 },
 });

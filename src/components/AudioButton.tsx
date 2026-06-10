@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { TouchableOpacity, Animated, StyleSheet, Text, View } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   isRecording: boolean;
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export function AudioButton({ isRecording, disabled, onPress }: Props) {
+  const { colors } = useTheme();
   const pulseScale = useRef(new Animated.Value(1)).current;
   const ringOpacity = useRef(new Animated.Value(0)).current;
 
@@ -37,12 +38,16 @@ export function AudioButton({ isRecording, disabled, onPress }: Props) {
       <View style={styles.wrapper}>
         {/* Pulsing ring behind button */}
         <Animated.View
-          style={[styles.ring, { opacity: ringOpacity, transform: [{ scale: pulseScale }] }]}
+          style={[
+            styles.ring,
+            { backgroundColor: colors.recording, opacity: ringOpacity, transform: [{ scale: pulseScale }] },
+          ]}
         />
         <Animated.View
           style={[
             styles.button,
-            isRecording && styles.buttonRecording,
+            { backgroundColor: isRecording ? colors.recording : colors.secondaryLight },
+            isRecording && { shadowColor: colors.recording, ...styles.buttonRecordingShadow },
             { transform: [{ scale: pulseScale }] },
           ]}
         >
@@ -65,19 +70,15 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.recording,
   },
   button: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: Colors.secondaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonRecording: {
-    backgroundColor: Colors.recording,
-    shadowColor: Colors.recording,
+  buttonRecordingShadow: {
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 6,

@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   children: string;
@@ -56,9 +56,10 @@ function renderInline(text: string, baseStyle: object, key: string) {
 }
 
 export function SimpleMarkdown({ children, isError }: Props) {
+  const { colors } = useTheme();
   const lines = children.split('\n');
   const nodes: React.ReactNode[] = [];
-  const bodyStyle = isError ? styles.error : styles.body;
+  const bodyStyle = [styles.body, { color: isError ? colors.error : colors.textPrimary }];
 
   let i = 0;
   for (const rawLine of lines) {
@@ -67,7 +68,7 @@ export function SimpleMarkdown({ children, isError }: Props) {
 
     // Horizontal rule
     if (line === '---' || line === '***' || line === '___') {
-      nodes.push(<View key={key} style={styles.hr} />);
+      nodes.push(<View key={key} style={[styles.hr, { backgroundColor: colors.separator }]} />);
       continue;
     }
 
@@ -75,7 +76,7 @@ export function SimpleMarkdown({ children, isError }: Props) {
     if (line.startsWith('## ')) {
       const text = line.slice(3);
       nodes.push(
-        <Text key={key} style={styles.h2}>
+        <Text key={key} style={[styles.h2, { color: colors.primaryDark }]}>
           {text}
         </Text>
       );
@@ -84,7 +85,7 @@ export function SimpleMarkdown({ children, isError }: Props) {
     if (line.startsWith('# ')) {
       const text = line.slice(2);
       nodes.push(
-        <Text key={key} style={styles.h1}>
+        <Text key={key} style={[styles.h1, { color: colors.secondary }]}>
           {text}
         </Text>
       );
@@ -138,12 +139,6 @@ export function SimpleMarkdown({ children, isError }: Props) {
 
 const styles = StyleSheet.create({
   body: {
-    color: Colors.textPrimary,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  error: {
-    color: Colors.error,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -152,17 +147,14 @@ const styles = StyleSheet.create({
   },
   italic: {
     fontStyle: 'italic',
-    color: Colors.textSecondary,
   },
   h1: {
-    color: Colors.secondary,
     fontSize: 17,
     fontWeight: '800',
     marginTop: 6,
     marginBottom: 2,
   },
   h2: {
-    color: Colors.primaryDark,
     fontSize: 16,
     fontWeight: '700',
     marginTop: 4,
@@ -170,7 +162,6 @@ const styles = StyleSheet.create({
   },
   hr: {
     height: 1,
-    backgroundColor: Colors.separator,
     marginVertical: 10,
   },
   listRow: {
