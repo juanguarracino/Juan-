@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -22,6 +23,14 @@ function formatDate(iso: string): string {
   const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+}
+
+const CARD_EMOJIS = ['🍲', '🥘', '🍝', '🥗', '🍳', '🌮', '🍕', '🥪'];
+
+function emojiFor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  return CARD_EMOJIS[Math.abs(hash) % CARD_EMOJIS.length];
 }
 
 export function ConversationListScreen({ onOpen }: Props) {
@@ -45,64 +54,78 @@ export function ConversationListScreen({ onOpen }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerEmoji}>👨‍🍳</Text>
-          <Text style={styles.headerTitle}>¿Qué Comemos Hoy?</Text>
+      {/* Hero header */}
+      <View style={styles.hero}>
+        <View style={styles.heroText}>
+          <Text style={styles.heroGreeting}>¡Hola! 👋</Text>
+          <Text style={styles.heroTitle}>¿Qué comemos{'\n'}hoy?</Text>
+          <Text style={styles.heroSubtitle}>Tu chef personal, siempre listo</Text>
         </View>
-        <TouchableOpacity style={styles.newButton} onPress={handleNew} activeOpacity={0.8}>
-          <Text style={styles.newButtonText}>+ Nuevo</Text>
-        </TouchableOpacity>
+        <Image
+          source={require('../../assets/logo.png')}
+          style={styles.heroLogo}
+          resizeMode="contain"
+        />
       </View>
+
+      {/* Section label */}
+      {conversations.length > 0 && (
+        <Text style={styles.sectionLabel}>TUS CONVERSACIONES</Text>
+      )}
 
       {/* List or empty state */}
       {conversations.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🍽️</Text>
-          <Text style={styles.emptyTitle}>No hay chats todavía</Text>
-          <Text style={styles.emptySubtitle}>Tocá "+ Nuevo" para empezar</Text>
-          <TouchableOpacity style={styles.emptyButton} onPress={handleNew} activeOpacity={0.8}>
-            <Text style={styles.emptyButtonText}>+ Nuevo chat</Text>
-          </TouchableOpacity>
+          <Text style={styles.emptyTitle}>Todavía no hay chats</Text>
+          <Text style={styles.emptySubtitle}>
+            Empezá una conversación y contale al chef qué tenés en la heladera
+          </Text>
         </View>
       ) : (
         <FlatList
           data={conversations}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.item}
+              style={styles.card}
               onPress={() => onOpen(item.id)}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
             >
-              <View style={styles.itemIcon}>
-                <Text style={styles.itemIconText}>🍽️</Text>
+              <View style={styles.cardIcon}>
+                <Text style={styles.cardIconText}>{emojiFor(item.id)}</Text>
               </View>
-              <View style={styles.itemContent}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemPreview} numberOfLines={1}>
+              <View style={styles.cardContent}>
+                <Text style={styles.cardName}>{item.name}</Text>
+                <Text style={styles.cardPreview} numberOfLines={1}>
                   {item.preview}
                 </Text>
               </View>
-              <View style={styles.itemRight}>
-                <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
+              <View style={styles.cardRight}>
+                <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => handleDelete(item)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Text style={styles.deleteIcon}>🗑️</Text>
+                  <Text style={styles.deleteIcon}>✕</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
           )}
         />
       )}
+
+      {/* Bottom CTA */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.newButton} onPress={handleNew} activeOpacity={0.85}>
+          <Text style={styles.newButtonIcon}>＋</Text>
+          <Text style={styles.newButtonText}>Nueva conversación</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -110,127 +133,164 @@ export function ConversationListScreen({ onOpen }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.headerBackground,
+    backgroundColor: Colors.background,
   },
-  header: {
-    backgroundColor: Colors.headerBackground,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  hero: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 10,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  heroText: {
+    flex: 1,
   },
-  headerEmoji: {
-    fontSize: 28,
+  heroGreeting: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+    marginBottom: 4,
   },
-  headerTitle: {
-    color: Colors.headerText,
-    fontSize: 18,
+  heroTitle: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '800',
+    color: Colors.secondary,
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  heroLogo: {
+    width: 96,
+    height: 96,
+    borderRadius: 22,
+  },
+  sectionLabel: {
+    fontSize: 11,
     fontWeight: '700',
-  },
-  newButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 16,
-    backgroundColor: Colors.accent,
-  },
-  newButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    letterSpacing: 1.2,
+    color: Colors.textSecondary,
+    paddingHorizontal: 24,
+    marginTop: 14,
+    marginBottom: 8,
   },
   list: {
-    backgroundColor: Colors.surface,
-    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 10,
   },
-  separator: {
-    height: 1,
-    backgroundColor: Colors.separator,
-    marginLeft: 72,
-  },
-  item: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
     backgroundColor: Colors.surface,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  itemIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  itemIconText: {
-    fontSize: 20,
+  cardIconText: {
+    fontSize: 24,
   },
-  itemContent: {
+  cardContent: {
     flex: 1,
     marginRight: 8,
   },
-  itemName: {
+  cardName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
     marginBottom: 3,
   },
-  itemPreview: {
+  cardPreview: {
     fontSize: 13,
     color: Colors.textSecondary,
   },
-  itemRight: {
+  cardRight: {
     alignItems: 'flex-end',
-    gap: 6,
+    gap: 8,
   },
-  itemDate: {
+  cardDate: {
     fontSize: 11,
     color: Colors.textSecondary,
+    fontWeight: '500',
   },
   deleteButton: {
-    padding: 2,
-  },
-  deleteIcon: {
-    fontSize: 16,
-  },
-  empty: {
-    flex: 1,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+  },
+  deleteIcon: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+  },
+  empty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
   },
   emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: 56,
+    marginBottom: 14,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '700',
     color: Colors.textPrimary,
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 28,
+    textAlign: 'center',
+    lineHeight: 21,
   },
-  emptyButton: {
+  bottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 24,
+  },
+  newButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: Colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: 28,
+    paddingVertical: 16,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  emptyButtonText: {
+  newButtonIcon: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  newButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

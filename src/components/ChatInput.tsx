@@ -78,7 +78,7 @@ export function ChatInput({ onSend, onSendVoice, isLoading }: Props) {
         value={isRecording ? '' : text}
         onChangeText={setText}
         placeholder={isRecording ? '🔴 Grabando...' : '¿Qué ingredientes tenés en casa?'}
-        placeholderTextColor={isRecording ? '#EF5350' : Colors.textSecondary}
+        placeholderTextColor={isRecording ? Colors.recording : Colors.textSecondary}
         multiline
         maxLength={500}
         returnKeyType="send"
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 46,
     maxHeight: 120,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.inputBackground,
     borderWidth: 1.5,
     borderColor: Colors.inputBorder,
     borderRadius: 24,
@@ -137,20 +137,20 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   inputRecording: {
-    borderColor: '#EF5350',
+    borderColor: Colors.recording,
     backgroundColor: '#FFF5F5',
   },
   sendButton: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 4,
   },
   sendIcon: {

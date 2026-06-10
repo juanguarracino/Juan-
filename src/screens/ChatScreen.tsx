@@ -82,7 +82,7 @@ export function ChatScreen({ conversationId, onBack }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -91,21 +91,26 @@ export function ChatScreen({ conversationId, onBack }: Props) {
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
 
-        {/* Center: logo + title */}
+        {/* Center: avatar + title */}
         <View style={styles.headerCenter}>
-          <Text style={styles.headerEmoji}>👨‍🍳</Text>
+          <View style={styles.headerAvatar}>
+            <Text style={styles.headerEmoji}>👨‍🍳</Text>
+          </View>
           <View>
-            <Text style={styles.headerTitle}>¿Qué Comemos Hoy?</Text>
-            <Text style={styles.headerSubtitle}>
-              {isLoading ? 'Pensando recetas...' : 'Tu Chef Chatbot'}
-            </Text>
+            <Text style={styles.headerTitle}>El Chef</Text>
+            <View style={styles.statusRow}>
+              <View style={[styles.statusDot, isLoading && styles.statusDotBusy]} />
+              <Text style={[styles.headerSubtitle, isLoading && styles.headerSubtitleBusy]}>
+                {isLoading ? 'Pensando recetas...' : 'En línea'}
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* Right: Limpiar button */}
         <View style={styles.headerRight}>
           {messages.length > 0 && (
-            <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
+            <TouchableOpacity onPress={handleClear} style={styles.clearButton} activeOpacity={0.7}>
               <Text style={styles.clearButtonText}>Limpiar</Text>
             </TouchableOpacity>
           )}
@@ -143,63 +148,92 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: Colors.headerBackground,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.separator,
+    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 6,
+    elevation: 3,
   },
   backButton: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginRight: 2,
   },
   backIcon: {
-    color: Colors.headerText,
-    fontSize: 36,
-    lineHeight: 38,
-    fontWeight: '300',
+    color: Colors.secondary,
+    fontSize: 34,
+    lineHeight: 36,
+    fontWeight: '400',
   },
   headerCenter: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+  },
+  headerAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerEmoji: {
-    fontSize: 28,
+    fontSize: 22,
   },
   headerTitle: {
-    color: Colors.headerText,
-    fontSize: 16,
-    fontWeight: '700',
+    color: Colors.secondary,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+  },
+  statusDotBusy: {
+    backgroundColor: Colors.primary,
   },
   headerSubtitle: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 11,
-    marginTop: 1,
+    color: Colors.textSecondary,
+    fontSize: 12,
+  },
+  headerSubtitleBusy: {
+    color: Colors.primaryDark,
+    fontWeight: '600',
   },
   headerRight: {
-    minWidth: 68,
+    minWidth: 66,
     alignItems: 'flex-end',
   },
   clearButton: {
-    paddingHorizontal: 11,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 14,
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: Colors.separator,
   },
   clearButtonText: {
-    color: Colors.headerText,
+    color: Colors.textSecondary,
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   messagesContainer: {
     flex: 1,

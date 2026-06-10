@@ -1,17 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../constants/Colors';
 
 interface Props {
   uri: string;
   transcription: string;
 }
 
+// Se muestra dentro de la burbuja naranja del usuario → texto blanco
 export function VoicePlayer({ transcription }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Text style={styles.icon}>🎤</Text>
+        <View style={styles.iconBadge}>
+          <Text style={styles.icon}>🎤</Text>
+        </View>
         <Text style={styles.label}>Mensaje de voz</Text>
       </View>
       {transcription ? (
@@ -23,25 +25,33 @@ export function VoicePlayer({ transcription }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 4,
+    gap: 6,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+  },
+  iconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   icon: {
-    fontSize: 15,
+    fontSize: 14,
   },
   label: {
     fontSize: 13,
-    color: Colors.textSecondary,
-    fontWeight: '600',
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '700',
   },
   transcription: {
-    fontSize: 13,
-    color: Colors.textPrimary,
+    fontSize: 14,
+    color: '#FFFFFF',
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: 20,
   },
 });

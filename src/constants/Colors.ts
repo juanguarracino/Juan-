@@ -1,26 +1,53 @@
+/**
+ * Design system — "¿Qué Comemos Hoy?"
+ * Paleta derivada del logo: naranja cálido (chef), teal (tipografía),
+ * crema (fondo). Cálida, familiar y apetitosa.
+ */
 export const Colors = {
-  primary: '#2E7D32',
-  primaryLight: '#E8F5E9',
-  primaryDark: '#1B5E20',
-  accent: '#F5A623',
-  accentLight: '#FFF3E0',
-  background: '#FAF8F5',
+  // Marca
+  primary: '#E8702A',        // naranja del chef
+  primaryDark: '#C95A1B',
+  primaryLight: '#FDEBDD',
+  secondary: '#177E72',      // teal del logotipo
+  secondaryDark: '#0F5F56',
+  secondaryLight: '#E0F2F0',
+
+  // Compatibilidad con nombres anteriores
+  accent: '#E8702A',
+  accentLight: '#FDEBDD',
+
+  // Superficies
+  background: '#FBF5EC',     // crema cálido
   surface: '#FFFFFF',
+
+  // Burbujas de chat
+  bubbleUser: '#E8702A',
+  bubbleUserText: '#FFFFFF',
   bubbleAssistant: '#FFFFFF',
-  bubbleUser: '#E4F5D4',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#757575',
+
+  // Texto
+  textPrimary: '#2D2A26',
+  textSecondary: '#8A8378',
   textOnPrimary: '#FFFFFF',
-  inputBackground: '#FFFFFF',
-  inputBorder: '#E8E4DE',
-  typingDot: '#BDBDBD',
+
+  // Inputs
+  inputBackground: '#F7F0E5',
+  inputBorder: '#EFE7DA',
+
+  // Estados
+  typingDot: '#E8702A',
+  recording: '#E5484D',
   error: '#C62828',
   errorLight: '#FFEBEE',
-  headerBackground: '#2E7D32',
-  headerText: '#FFFFFF',
-  separator: '#E8E4DE',
-  chipBackground: '#E8F5E9',
-  chipBorder: '#A5D6A7',
-  chipText: '#2E7D32',
-  shadow: '#000000',
+
+  // Header (claro y moderno)
+  headerBackground: '#FFFFFF',
+  headerText: '#177E72',
+
+  // Varios
+  separator: '#F0E8DC',
+  chipBackground: '#FFFFFF',
+  chipBorder: '#F2C9A8',
+  chipText: '#C95A1B',
+  shadow: '#3D2E1E',
 };
